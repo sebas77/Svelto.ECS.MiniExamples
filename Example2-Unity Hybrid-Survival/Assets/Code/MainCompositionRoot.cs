@@ -8,6 +8,7 @@ using Svelto.ECS.Example.Survive.Player.Gun;
 using Svelto.ECS.Example.Survive.Sounds;
 using Svelto.ECS.Example.Survive.HUD;
 using Svelto.ECS.Example.Survive.ResourceManager;
+using Svelto.ECS.Example.Survive.Weapons;
 using Svelto.ECS.Extensions.Unity;
 using Svelto.ECS.Schedulers.Unity;
 using UnityEngine;
@@ -165,6 +166,14 @@ namespace Svelto.ECS.Example.Survive
             _enginesRoot.AddEngine(hudEngine);
             _enginesRoot.AddEngine(scoreEngine);
 
+            //Ammo engine
+            var ammoSpawnerEngine = new AmmoSpawnerEngine(gameObjectFactory, entityFactory, entityFunctions);
+            var ammoCollisionEngine = new AmmoCollisionEngine(entityFunctions);
+            var ammoVisualEngine = new AmmoVisualEngine();
+            _enginesRoot.AddEngine(ammoSpawnerEngine);
+            _enginesRoot.AddEngine(ammoCollisionEngine);
+            _enginesRoot.AddEngine(ammoVisualEngine);
+
             var unsortedEngines = new SurvivalUnsortedEnginesGroup(new FasterList<IStepEngine>(
                 new IStepEngine[]
                 {
@@ -177,7 +186,10 @@ namespace Svelto.ECS.Example.Survive
                     enemyMovementEngine,
                     cameraFollowTargetEngine,
                     hudEngine,
-                    restartGameOnPlayerDeath
+                    restartGameOnPlayerDeath,
+                    ammoSpawnerEngine,
+                    ammoCollisionEngine,
+                    ammoVisualEngine
                 }
             ));
             

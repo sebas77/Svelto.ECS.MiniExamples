@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Svelto.ECS.Example.Survive.HUD
 {
-    public class HudEntityDescriptor : GenericEntityDescriptor<HUDEntityViewComponent>
+    public class HudEntityDescriptor : GenericEntityDescriptor<HUDEntityViewComponent, WaveDataComponent>
     {
     }
 

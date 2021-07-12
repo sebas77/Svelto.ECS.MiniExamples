@@ -89,7 +89,7 @@ namespace Svelto.ECS.Example.Survive.Enemies
                             //if this fails, it means that the target entity doesn't exist anymore. 
                             //Unluckily Unity doesn't trigger OnTriggerExit on RB disabled and any way to find
                             //a work around it, would have been much more complex than just this if
-                            if (enemyCollisionData.otherEntityID.ToEGID(entitiesDB, out var otherEntityID) == true)
+                            if (enemyCollisionData.otherEntityID.ToEGID(entitiesDB, out var otherEntityID) == true && otherEntityID.groupID == Player.Player.BuildGroup) //dont damage ammo
                             {
                                 DamageTargetInsideRange(otherEntityID, enemyAttackComponent.attackDamage);
                             }

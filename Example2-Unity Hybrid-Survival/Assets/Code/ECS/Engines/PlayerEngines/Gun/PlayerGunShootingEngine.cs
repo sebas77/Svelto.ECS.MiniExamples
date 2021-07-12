@@ -15,7 +15,7 @@ namespace Svelto.ECS.Example.Survive.Player.Gun
         }
 
         public EntitiesDB entitiesDB { set; private get; }
-        public void       Ready()    { }
+        public void       Ready()    {}
         public void       Step()     { _shootTick.MoveNext(); }
         public string     name       => nameof(PlayerGunShootingEngine);
 
@@ -35,11 +35,12 @@ namespace Svelto.ECS.Example.Survive.Player.Gun
                             var     gunEGID          = weapons[i].weapon.ToEGID(entitiesDB);
                             ref var playerGunComponent = ref entitiesDB.QueryEntity<GunAttributesComponent>(gunEGID);
                             ref var playerGunViewComponent = ref entitiesDB.QueryEntity<GunEntityViewComponent>(gunEGID);
+                            ref var ammoComponent = ref entitiesDB.QueryEntity<Weapons.AmmoValueComponent>(gunEGID);
 
                             playerGunComponent.timer += _time.deltaTime;
 
-                            if (playerGunComponent.timer >= playerGunComponent.timeBetweenBullets)
-                                this.Shoot(ref playerGunComponent, playerGunViewComponent);
+                            if (playerGunComponent.timer >= playerGunComponent.timeBetweenBullets && ammoComponent.ammoValue > 0)
+                                this.Shoot(ref playerGunComponent, playerGunViewComponent, ref ammoComponent);
                         }
                     }
                 }
@@ -60,9 +61,12 @@ namespace Svelto.ECS.Example.Survive.Player.Gun
         ///     Svelto and ECS help immensely to abstract only when it's actually needed
         /// </summary>
         /// <param name="playerGunEntityView"></param>
-        void Shoot(ref GunAttributesComponent playerGunEntityView, in GunEntityViewComponent gunFxComponent)
+        void Shoot(ref GunAttributesComponent playerGunEntityView, in GunEntityViewComponent gunFxComponent, ref Weapons.AmmoValueComponent ammoValueComponent)
         {
             playerGunEntityView.timer = 0;
+
+            ammoValueComponent.ammoValue--;
+            entitiesDB.PublishEntityChange<Weapons.AmmoValueComponent>(gunFxComponent.ID);
 
             Ray shootRay = gunFxComponent.gunFXComponent.shootRay;
             
@@ -100,5 +104,6 @@ namespace Svelto.ECS.Example.Survive.Player.Gun
         readonly IRayCaster _rayCaster;
         readonly ITime       _time;
         readonly IEnumerator _shootTick;
+
     }
 }

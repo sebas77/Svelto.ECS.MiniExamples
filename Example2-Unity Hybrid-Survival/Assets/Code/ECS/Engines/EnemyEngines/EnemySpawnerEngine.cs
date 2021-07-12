@@ -15,6 +15,8 @@ namespace Svelto.ECS.Example.Survive.Enemies
             _entityFunctions      = entityFunctions;
             _enemyFactory         = enemyFactory;
             _numberOfEnemyToSpawn = NUMBER_OF_ENEMIES_TO_SPAWN;
+            _deadCount = 0;
+            _waveOver = false;
         }
 
         public EntitiesDB entitiesDB { private get; set; }
@@ -28,6 +30,19 @@ namespace Svelto.ECS.Example.Survive.Enemies
             if (egid.groupID.FoundIn(DeadEnemies.Groups))
             {
                 _numberOfEnemyToSpawn++;
+                _deadCount++;
+
+                //update wave component of hud
+                var (buffer, count) = entitiesDB.QueryEntities<HUD.HUDEntityViewComponent>(ECSGroups.GUICanvas);
+                var hudEGID = buffer[0].ID;
+                var (wave, count2) = entitiesDB.QueryEntities<WaveDataComponent>(ECSGroups.GUICanvas);
+                wave[0].enemyCount = _currentWaveMax - _deadCount;
+                entitiesDB.PublishEntityChange<WaveDataComponent>(hudEGID);
+                
+                if (_deadCount >= _currentWaveMax)
+                {
+                    _waveOver = true;
+                }
             }
         }
 
@@ -44,19 +59,76 @@ namespace Svelto.ECS.Example.Survive.Enemies
             //to use will never change            
             IEnumerator<JSonEnemySpawnData[]>  enemiestoSpawnJsons  = ReadEnemySpawningDataServiceRequest();
             IEnumerator<JSonEnemyAttackData[]> enemyAttackDataJsons = ReadEnemyAttackDataServiceRequest();
+            IEnumerator<JSonEnemyWaveData[]>   enemyWaveDataJsons   = ReadEnemyWaveDataServiceRequest();
 
             while (enemiestoSpawnJsons.MoveNext())
                 yield return null;
             while (enemyAttackDataJsons.MoveNext())
                 yield return null;
+            while (enemyWaveDataJsons.MoveNext())
+                yield return null;
 
+            //JSONS
             var enemiestoSpawn  = enemiestoSpawnJsons.Current;
             var enemyAttackData = enemyAttackDataJsons.Current;
+            var enemyWaveData = enemyWaveDataJsons.Current;
 
+            //Array Data
+            var amountToSpawnEach = new int[enemiestoSpawn.Length];
             var spawningTimes = new float[enemiestoSpawn.Length];
+            var waveData = enemyWaveData[0]; //wave data 0
 
+            //Setup first wave
+            _currentWaveMax = 0;
+            for (var i = enemiestoSpawn.Length - 1; i >= 0; --i)
+            {
+                amountToSpawnEach[i] = (int)waveData.enemyWaveData.amountToSpawn[i];
+                _currentWaveMax += (int)waveData.enemyWaveData.amountToSpawn[i];
+            }
+
+            //Wave Data component update
+            var (buffer, count) = entitiesDB.QueryEntities<HUD.HUDEntityViewComponent>(ECSGroups.GUICanvas);
+            var hudEGID = buffer[0].ID;
+            var (wave, count2) = entitiesDB.QueryEntities<WaveDataComponent>(ECSGroups.GUICanvas);
+            wave[0].waveValue = 0;
+            wave[0].enemyCount = _currentWaveMax;
+            entitiesDB.PublishEntityChange<WaveDataComponent>(hudEGID);
+
+            //Setup Spawntimes
             for (var i = enemiestoSpawn.Length - 1; i >= 0 && _numberOfEnemyToSpawn > 0; --i)
                 spawningTimes[i] = enemiestoSpawn[i].enemySpawnData.spawnTime;
+
+            void CheckWaveFinished()
+            {
+                if (_waveOver)
+                {
+                    ref var wavecomponent = ref entitiesDB.QueryEntity<WaveDataComponent>(hudEGID);
+                    wavecomponent.waveValue++;
+
+                    if (wavecomponent.waveValue >= enemyWaveData.Length)
+                        waveData = enemyWaveData[enemyWaveData.Length - 1];
+                    else
+                        waveData = enemyWaveData[wavecomponent.waveValue];
+
+                    _deadCount = 0;
+                    _currentWaveMax = 0;
+
+                    for (var i = enemiestoSpawn.Length - 1; i >= 0; --i)
+                    {
+                        amountToSpawnEach[i] = (int)waveData.enemyWaveData.amountToSpawn[i];
+                        _currentWaveMax += (int)waveData.enemyWaveData.amountToSpawn[i];
+                    }
+
+                    //reset spawn timers
+                    for (var i = enemiestoSpawn.Length - 1; i >= 0 && _numberOfEnemyToSpawn > 0; --i)
+                        spawningTimes[i] = enemiestoSpawn[i].enemySpawnData.spawnTime + 5;
+                    
+                    wavecomponent.enemyCount = _currentWaveMax;
+                    entitiesDB.PublishEntityChange<WaveDataComponent>(hudEGID);
+
+                    _waveOver = false;
+                }
+            }
 
             while (true)
             {
@@ -67,10 +139,16 @@ namespace Svelto.ECS.Example.Survive.Enemies
                 while (waitForSecondsEnumerator.MoveNext())
                     yield return null;
 
+                CheckWaveFinished();
+
+                bool SpawnLeft = true;
+                if (amountToSpawnEach[0] == 0 && amountToSpawnEach[1] == 0 && amountToSpawnEach[2] == 0) SpawnLeft = false;
+
                 //cycle around the enemies to spawn and check if it can be spawned
-                for (var i = enemiestoSpawn.Length - 1; i >= 0 && _numberOfEnemyToSpawn > 0; --i)
+                //for (var i = enemiestoSpawn.Length - 1; i >= 0 && _numberOfEnemyToSpawn > 0; --i)
+                for (var i = enemiestoSpawn.Length - 1; i >= 0 && SpawnLeft; --i)
                 {
-                    if (spawningTimes[i] <= 0.0f)
+                    if (spawningTimes[i] <= 0.0f && amountToSpawnEach[i] > 0)
                     {
                         var spawnData = enemiestoSpawn[i];
 
@@ -106,6 +184,8 @@ namespace Svelto.ECS.Example.Survive.Enemies
 
                         spawningTimes[i] = spawnData.enemySpawnData.spawnTime;
                         _numberOfEnemyToSpawn--;
+
+                        amountToSpawnEach[i]--;
                     }
 
                     spawningTimes[i] -= SECONDS_BETWEEN_SPAWNS;
@@ -168,10 +248,26 @@ namespace Svelto.ECS.Example.Survive.Enemies
             yield return enemiesAttackData;
         }
 
+        static IEnumerator<JSonEnemyWaveData[]> ReadEnemyWaveDataServiceRequest()
+        {
+            var json = Addressables.LoadAssetAsync<TextAsset>("EnemyWaveData");
+
+            while (json.IsDone == false)
+                yield return null;
+
+            var enemyWaveData = JsonHelper.getJsonArray<JSonEnemyWaveData>(json.Result.text);
+
+            yield return enemyWaveData;
+        }
+
         readonly EnemyFactory     _enemyFactory;
         readonly IEntityFunctions _entityFunctions;
 
         int         _numberOfEnemyToSpawn;
         IEnumerator _intervaledTick;
+
+        int _deadCount;
+        int _currentWaveMax;
+        bool _waveOver;
     }
 }
