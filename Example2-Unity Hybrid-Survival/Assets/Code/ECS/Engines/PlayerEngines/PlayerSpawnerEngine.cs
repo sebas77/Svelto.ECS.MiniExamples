@@ -43,7 +43,7 @@ namespace Svelto.ECS.Example.Survive.Player
             //search for the implementors they need (player and guns separately)
             List<IImplementor> implementors = new List<IImplementor>();
             player.GetComponentsInChildren(true, implementors);
-            
+
             //EghidHolderImplementor is a special framework provided implementor that tracks the EGID 
             //of the entity linked to the implementor
             EntityReferenceHolderImplementor egidHoldImplementor = player.AddComponent<EntityReferenceHolderImplementor>();
@@ -80,6 +80,7 @@ namespace Svelto.ECS.Example.Survive.Player
                 currentHealth = 100
             });
             playerInitializer.Init(new SpeedComponent(6));
+
         }
 
         void BuildGunEntity(EntityInitializer playerInitializer, List<IImplementor> implementors)
@@ -100,14 +101,14 @@ namespace Svelto.ECS.Example.Survive.Player
                 timeBetweenBullets = 0.15f
               , range              = 100f
               , damagePerShot      = 20
-               ,
+              , ammo               = 100
+              ,
             });
             
             playerInitializer.Init(new PlayerWeaponComponent()
             {
                 weapon = init.reference
             });
-            
         }
 
         /// <summary>

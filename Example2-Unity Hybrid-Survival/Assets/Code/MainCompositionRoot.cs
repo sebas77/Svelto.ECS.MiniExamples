@@ -7,6 +7,7 @@ using Svelto.ECS.Example.Survive.Player;
 using Svelto.ECS.Example.Survive.Player.Gun;
 using Svelto.ECS.Example.Survive.Sounds;
 using Svelto.ECS.Example.Survive.HUD;
+using Svelto.ECS.Example.Survive.AmmoBox;
 using Svelto.ECS.Example.Survive.ResourceManager;
 using Svelto.ECS.Extensions.Unity;
 using Svelto.ECS.Schedulers.Unity;
@@ -102,6 +103,7 @@ namespace Svelto.ECS.Example.Survive
             //While it seems a complication it's important to keep the engines testable and not coupled with hard
             //dependencies
             var gameObjectFactory = new GameObjectFactory();
+            var ammoBoxFactory    = new AmmoBoxFactory(gameObjectFactory, entityFactory);
 
             //Player related engines. ALL the dependencies must be solved at this point through constructor injection.
             var playerShootingEngine       = new PlayerGunShootingEngine(rayCaster, time);
@@ -110,9 +112,12 @@ namespace Svelto.ECS.Example.Survive
             var playerDeathEngine          = new PlayerDeathEngine(entityFunctions, entityStreamConsumerFactory);
             var playerInputEngine          = new PlayerInputEngine();
             var playerGunShootingFXsEngine = new PlayerGunShootingFXsEngine(entityStreamConsumerFactory);
+            var ammoBoxTriggerEngine       = new AmmoBoxTriggerEngine(time, entityFunctions, entityStreamConsumerFactory, new WaitForSubmissionEnumerator(
+                                                            unityEntitySubmissionScheduler));
             //Spawner engines are factories engines that can build entities
             var playerSpawnerEngine      = new PlayerSpawnerEngine(gameObjectFactory, entityFactory);
             var restartGameOnPlayerDeath = new RestartGameOnPlayerDeathEngine();
+            var ammoBoxSpawnerEngine     = new AmmoBoxSpawnerEngine(ammoBoxFactory, entityFunctions);
 
             //Player engines
             _enginesRoot.AddEngine(playerMovementEngine);
@@ -123,6 +128,8 @@ namespace Svelto.ECS.Example.Survive
             _enginesRoot.AddEngine(playerDeathEngine);
             _enginesRoot.AddEngine(playerSpawnerEngine);
             _enginesRoot.AddEngine(restartGameOnPlayerDeath);
+            _enginesRoot.AddEngine(ammoBoxSpawnerEngine);
+            _enginesRoot.AddEngine(ammoBoxTriggerEngine);
 
             //Factory is one of the few OOP patterns that work very well with ECS. Its use is highly encouraged
             var enemyFactory = new EnemyFactory(gameObjectFactory, entityFactory);
@@ -159,11 +166,14 @@ namespace Svelto.ECS.Example.Survive
             var hudEngine         = new HUDEngine(entityStreamConsumerFactory);
             var damageSoundEngine = new DamageSoundEngine(entityStreamConsumerFactory);
             var scoreEngine       = new UpdateScoreEngine(entityStreamConsumerFactory);
-
+            var ammoEngine        = new UpdateAmmoEngine(entityStreamConsumerFactory);
+            var enemiesLeftEngine = new UpdateEnemiesLeftEngine();
             //other engines
             _enginesRoot.AddEngine(damageSoundEngine);
             _enginesRoot.AddEngine(hudEngine);
             _enginesRoot.AddEngine(scoreEngine);
+            _enginesRoot.AddEngine(ammoEngine);
+            _enginesRoot.AddEngine(enemiesLeftEngine);
 
             var unsortedEngines = new SurvivalUnsortedEnginesGroup(new FasterList<IStepEngine>(
                 new IStepEngine[]
@@ -175,6 +185,7 @@ namespace Svelto.ECS.Example.Survive
                     playerAnimationEngine,
                     enemySpawnerEngine,
                     enemyMovementEngine,
+                    ammoBoxSpawnerEngine,
                     cameraFollowTargetEngine,
                     hudEngine,
                     restartGameOnPlayerDeath
@@ -196,12 +207,15 @@ namespace Svelto.ECS.Example.Survive
             {
                 unsortedEngines
                , playerShootingEngine
+               , ammoEngine
                , enemyDamageFX
                , enemyAttackEngine
                , unsortedDamageEngines            
                , playerDeathEngine
+               , enemiesLeftEngine
                , enemyDeathEngine
                , scoreEngine
+               ,ammoBoxTriggerEngine
             })));
 
             BuildGUIEntitiesFromScene(contextHolder, entityFactory);

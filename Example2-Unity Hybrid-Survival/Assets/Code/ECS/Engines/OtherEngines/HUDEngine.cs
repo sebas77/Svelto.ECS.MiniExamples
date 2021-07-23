@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using Svelto.ECS.Example.Survive.Player;
 
 namespace Svelto.ECS.Example.Survive.HUD
 {
@@ -16,7 +17,7 @@ namespace Svelto.ECS.Example.Survive.HUD
         {
             _consumerFactory = consumerFactory;
             _animateUI = AnimateUI();
-            _checkForDamage= CheckForDamage();
+            _checkForDamage = CheckForDamage();
         }
 
         public EntitiesDB entitiesDB { set; private get; }
@@ -28,8 +29,9 @@ namespace Svelto.ECS.Example.Survive.HUD
         {
             _animateUI.MoveNext();
             _checkForDamage.MoveNext();
+
         }
-        public string name   => nameof(HUDEngine);
+        public string name => nameof(HUDEngine);
 
         IEnumerator AnimateUI()
         {
@@ -56,7 +58,7 @@ namespace Svelto.ECS.Example.Survive.HUD
         IEnumerator CheckForDamage()
         {
             var _consumerHealth = _consumerFactory.GenerateConsumer<HealthComponent>("HUDEngine", 1);
-            
+
             while (true)
             {
                 while (_consumerHealth.TryDequeue(out var health, out var egid))
@@ -78,9 +80,11 @@ namespace Svelto.ECS.Example.Survive.HUD
                 yield return null;
             }
         }
+        
+
 
         readonly IEntityStreamConsumerFactory _consumerFactory;
-        readonly IEnumerator                  _animateUI;
-        readonly IEnumerator                  _checkForDamage;
+        readonly IEnumerator _animateUI;
+        readonly IEnumerator _checkForDamage;
     }
 }

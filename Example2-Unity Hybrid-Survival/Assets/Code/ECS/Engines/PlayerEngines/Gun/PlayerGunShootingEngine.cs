@@ -38,8 +38,17 @@ namespace Svelto.ECS.Example.Survive.Player.Gun
 
                             playerGunComponent.timer += _time.deltaTime;
 
-                            if (playerGunComponent.timer >= playerGunComponent.timeBetweenBullets)
-                                this.Shoot(ref playerGunComponent, playerGunViewComponent);
+                            
+                            if (playerGunComponent.ammo > 0)
+                            {
+                                if (playerGunComponent.timer >= playerGunComponent.timeBetweenBullets)
+                                { 
+                                    playerGunComponent.ammo--;
+                                    this.Shoot(ref playerGunComponent, playerGunViewComponent);
+                                  
+                                }
+                            }
+                            
                         }
                     }
                 }

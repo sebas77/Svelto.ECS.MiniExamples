@@ -11,8 +11,10 @@ public class SerializeDataInspector : Editor
         SpawningData myScript = (SpawningData)target;
         if (GUILayout.Button("Export Json file"))
         {
+            Debug.Log("generated json files");
             myScript.SerializeSpawnData();
             myScript.SerializeAttackData();
+            myScript.SerializeAmmoBoxSpawnData();
         }
     }
     

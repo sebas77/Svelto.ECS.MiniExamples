@@ -91,6 +91,7 @@ namespace Svelto.ECS.Example.Survive.Enemies
                             //a work around it, would have been much more complex than just this if
                             if (enemyCollisionData.otherEntityID.ToEGID(entitiesDB, out var otherEntityID) == true)
                             {
+                                if(otherEntityID.groupID.FoundIn(Player.Player.Groups))
                                 DamageTargetInsideRange(otherEntityID, enemyAttackComponent.attackDamage);
                             }
                         }
@@ -101,7 +102,7 @@ namespace Svelto.ECS.Example.Survive.Enemies
 
         void DamageTargetInsideRange(in EGID otherEntityID, int attackDamage)
         {
-            entitiesDB.QueryEntity<DamageableComponent>(otherEntityID).damageInfo =
+           entitiesDB.QueryEntity<DamageableComponent>(otherEntityID).damageInfo =
                 new DamageInfo(attackDamage, Vector3.zero);
 
             entitiesDB.PublishEntityChange<DamageableComponent>(otherEntityID);

@@ -6,6 +6,10 @@ namespace Svelto.ECS.Example.Survive
     public class Dead : GroupTag<Dead> { };
 
     public class Damageable : GroupTag<Damageable> { };
+
+    public class Available : GroupTag<Available> { };
+
+    public class Used : GroupTag<Used> { };
 }
 
 namespace Svelto.ECS.Example.Survive.Weapons
@@ -31,6 +35,13 @@ namespace Svelto.ECS.Example.Survive.Enemies
     public class AliveEnemies : GroupCompound<EnemyTag, Damageable> { };
 }
 
+namespace Svelto.ECS.Example.Survive.AmmoBox
+{
+    public class AmmoBoxTag : GroupTag<AmmoBoxTag> { };
+    public class AmmoBoxAvailable : GroupCompound<AmmoBoxTag, Available> { };
+    public class AmmoBoxUsed : GroupCompound<AmmoBoxTag, Used> { };
+}
+
 namespace Svelto.ECS.Example.Survive
 {
     /// <summary>
@@ -53,5 +64,6 @@ namespace Svelto.ECS.Example.Survive
         public static EGID   HUD = new EGID(0, GUICanvas);
         //Reserve a book range, as many groups as the possible number of player enemies
         public static readonly ExclusiveGroup                           EnemiesToRecycleGroups = new ExclusiveGroup((ushort) Enum.GetNames(typeof(PlayerTargetType)).Length);
+        public static readonly ExclusiveGroup                           AmmoBoxToRcycleGroups = new ExclusiveGroup((ushort) Enum.GetNames(typeof(PlayerTargetType)).Length); 
     }
 }

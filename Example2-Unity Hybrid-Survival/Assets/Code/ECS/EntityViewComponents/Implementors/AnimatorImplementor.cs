@@ -12,6 +12,20 @@ namespace Svelto.ECS.Example.Survive.Implementors
             {
                 _animName = value;
                 _anim.SetTrigger(value);
+               
+            }
+        }
+
+        //added a value to handle bool conditions for animation
+        public string switchAnim
+        {
+            get => _animName;
+
+            set 
+            {
+                _animName = value;
+                _switchState = !_switchState;
+                _anim.SetBool(value, _switchState);
             }
         }
 
@@ -26,9 +40,14 @@ namespace Svelto.ECS.Example.Survive.Implementors
             }
         }
 
-        void Awake() { _anim = GetComponent<Animator>(); }
+        void Awake() 
+        { 
+            _anim = GetComponent<Animator>();
+            _switchState = false;
+        }
         
         Animator _anim;
         string   _animName;
+        bool     _switchState;
     }
 }

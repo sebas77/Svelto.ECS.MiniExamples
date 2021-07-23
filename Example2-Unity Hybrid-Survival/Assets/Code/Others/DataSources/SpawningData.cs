@@ -7,6 +7,7 @@ public class SpawningData : MonoBehaviour
 {
     static bool serializedSpawnDataOnce;
     static bool serializedAttackDataOnce;
+    static bool serialisedAmmoBoxDataOnce;
 
     void Awake() { Init(); }
 
@@ -44,6 +45,23 @@ public class SpawningData : MonoBehaviour
         File.WriteAllText("EnemyAttackData.json", json);
     }
 
+    public void SerializeAmmoBoxSpawnData()
+    {
+        serialisedAmmoBoxDataOnce = true;
+
+        var data        = GetComponents<AmmoBoxData>();
+        var spawnData   = new JSonAmmoBoxSpawnData[data.Length];
+
+        for (var i = 0; i < data.Length; i++)
+            spawnData[i] = new JSonAmmoBoxSpawnData(data[i].ammoBoxSpawnData);
+
+        var json = JsonHelper.arrayToJson(spawnData);
+
+        Console.Log(json);
+
+        File.WriteAllText("AmmoBoxSpanwingData.json", json);
+    }
+
     public void Init()
     {
         if (serializedSpawnDataOnce == false)
@@ -51,5 +69,8 @@ public class SpawningData : MonoBehaviour
 
         if (serializedAttackDataOnce == false)
             SerializeAttackData();
+
+        if (serialisedAmmoBoxDataOnce == false)
+            SerializeAmmoBoxSpawnData();
     }
 }

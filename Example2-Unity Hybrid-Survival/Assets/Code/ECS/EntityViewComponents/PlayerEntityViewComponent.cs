@@ -7,8 +7,7 @@ namespace Svelto.ECS.Example.Survive.Player
         public IRigidBodyComponent   rigidBodyComponent;
         public IPositionComponent    positionComponent;
         public IAnimationComponent   animationComponent;
-        public ITransformComponent   transformComponent;
-        
+        public ITransformComponent   transformComponent;     
         public EGID                ID { get; set; }
     }
 }

@@ -4,6 +4,7 @@ namespace Svelto.ECS.Example.Survive.Player
     {
         Bunny      = 0,
         Bear       = 1,
-        Hellephant = 2
+        Hellephant = 2,
+        AmmoBox    = 3
     }
 }

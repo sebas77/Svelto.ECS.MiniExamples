@@ -26,7 +26,7 @@ namespace Svelto.ECS.Example.Survive.Enemies
             {
                 EntityReferenceHolderImplementor enemyTargetEntityViewComponent = other.gameObject.GetComponent<EntityReferenceHolderImplementor>();
                 if (enemyTargetEntityViewComponent != null)
-                    hitChange.value = new EnemyCollisionData(enemyTargetEntityViewComponent.reference, true);
+                 hitChange.value = new EnemyCollisionData(enemyTargetEntityViewComponent.reference, true);
             }
         }
         

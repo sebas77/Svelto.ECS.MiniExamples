@@ -2,19 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Svelto.ECS.Example.Survive.Player;
 
 namespace Svelto.ECS.Example.Survive.Enemies
 {
     public class EnemySpawnerEngine : IQueryingEntitiesEngine, IReactOnSwap<EnemyEntityViewComponent>, IStepEngine
     {
         const int SECONDS_BETWEEN_SPAWNS = 1;
-        const int NUMBER_OF_ENEMIES_TO_SPAWN   = 12;
+        int [] NUMBER_OF_ENEMIES_TO_SPAWN = new int [7];
+        const int SECONDS_BETWEEN_WAVES = 10;
 
         public EnemySpawnerEngine(EnemyFactory enemyFactory, IEntityFunctions entityFunctions)
         {
+            //this should probably be put in the enemy spawn data json file but doing it here for simplicity 
+            NUMBER_OF_ENEMIES_TO_SPAWN[0] = 3;
+            NUMBER_OF_ENEMIES_TO_SPAWN[1] = NUMBER_OF_ENEMIES_TO_SPAWN[0] * 2;
+            NUMBER_OF_ENEMIES_TO_SPAWN[2] = NUMBER_OF_ENEMIES_TO_SPAWN[0] * 3;
+            NUMBER_OF_ENEMIES_TO_SPAWN[3] = NUMBER_OF_ENEMIES_TO_SPAWN[1] * 2;
+            NUMBER_OF_ENEMIES_TO_SPAWN[4] = NUMBER_OF_ENEMIES_TO_SPAWN[1] * 3;
+            NUMBER_OF_ENEMIES_TO_SPAWN[5] = NUMBER_OF_ENEMIES_TO_SPAWN[2] * 2;
+            NUMBER_OF_ENEMIES_TO_SPAWN[6] = NUMBER_OF_ENEMIES_TO_SPAWN[2] * 3;
+            
+            currentWave = 0;
             _entityFunctions      = entityFunctions;
             _enemyFactory         = enemyFactory;
-            _numberOfEnemyToSpawn = NUMBER_OF_ENEMIES_TO_SPAWN;
+            _numberOfEnemyToSpawn = NUMBER_OF_ENEMIES_TO_SPAWN[currentWave];
+
+           
         }
 
         public EntitiesDB entitiesDB { private get; set; }
@@ -27,7 +41,8 @@ namespace Svelto.ECS.Example.Survive.Enemies
             //is the enemy dead?
             if (egid.groupID.FoundIn(DeadEnemies.Groups))
             {
-                _numberOfEnemyToSpawn++;
+                _numberOfDeadEnemy++;
+               
             }
         }
 
@@ -58,12 +73,29 @@ namespace Svelto.ECS.Example.Survive.Enemies
             for (var i = enemiestoSpawn.Length - 1; i >= 0 && _numberOfEnemyToSpawn > 0; --i)
                 spawningTimes[i] = enemiestoSpawn[i].enemySpawnData.spawnTime;
 
+            
+            
             while (true)
             {
                 //Svelto.Tasks can yield Unity YieldInstructions but this comes with a performance hit
                 //so the fastest solution is always to use custom enumerators. To be honest the hit is minimal
-                //but it's better to not abuse it.                
+                //but it's better to not abuse it.  
+               
                 var waitForSecondsEnumerator = new WaitForSecondsEnumerator(SECONDS_BETWEEN_SPAWNS);
+
+                //when all enemies for that wave are dead, commence setting up the next wave
+                if(_numberOfDeadEnemy >= NUMBER_OF_ENEMIES_TO_SPAWN[currentWave])
+                {
+                    waitForSecondsEnumerator.Reset(SECONDS_BETWEEN_WAVES);
+                    if (currentWave < 7)
+                        currentWave++;
+                     
+                    _numberOfEnemyToSpawn = NUMBER_OF_ENEMIES_TO_SPAWN[currentWave];
+                    _numberOfDeadEnemy = 0; 
+                    
+                } 
+               
+
                 while (waitForSecondsEnumerator.MoveNext())
                     yield return null;
 
@@ -172,6 +204,8 @@ namespace Svelto.ECS.Example.Survive.Enemies
         readonly IEntityFunctions _entityFunctions;
 
         int         _numberOfEnemyToSpawn;
+        int         _numberOfDeadEnemy;
+        int         currentWave;
         IEnumerator _intervaledTick;
     }
 }
